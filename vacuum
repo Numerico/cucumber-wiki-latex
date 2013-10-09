@@ -1,0 +1,7 @@
+%s/\(<pre><code>\)\(\_.\{-}\)\(<\/code><\/pre>\)/\\begin{verbatim}\r\2\r\\end{verbatim}/g
+%s/\(<code>\)\(.\{-}\)\(<\/code>\)/\\verb@\2@/g
+%s/\(<em>\)\(\_.\{-}\)\(<\/em>\)/\\emph{\2}/g
+%s/\(<strong>\)\(\_.\{-}\)\(<\/strong>\)/\\textbf{\2}/g
+%s/\(<strong>\)\(\_.\{-}\)\(<\/string>\)/\\textbf{\2}/g
+%s/\(<pre>\)\(\_.\{-}\)\(<\/pre>\)/\\begin{verbatim}\r\2\r\\end{verbatim}/g
+%s/\(<strike>\)\(\_.\{-}\)\(<\/strike>\)/\\sout{\2}/g

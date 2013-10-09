@@ -1,0 +1,127 @@
+Step definitions are defined in ruby files under \verb@features/step_definitions/*_steps.rb@. Here is a simple example:
+
+\begin{verbatim}
+
+Given /^I have (\d+) cucumbers in my belly$/ do |cukes|
+  # Some Ruby code here
+end
+
+\end{verbatim}
+A step definition is analogous to a \emph{method definition /  function definition} in any kind of OO/procedural programming language. Step definitions can take 0 or more arguments, identified by groups in the Regexp (and an equal number of arguments to the Proc).
+
+Some people are uncomfortable with Regular Expressions. It's also possible to define Step Definitions using strings and \$variables like this:
+
+\begin{verbatim}
+
+Given "I have $n cucumbers in my belly" do |cukes|
+  # Some Ruby code here
+end
+
+\end{verbatim}
+In this case the String gets compiled to a Regular Expression behind the scenes: \verb@/^I have (.*) cucumbers in my belly$/@.
+
+Then there are Steps. Steps are declared in your \verb@features/*.feature@ files. Here is an example:
+
+\begin{verbatim}
+
+Given I have 93 cucumbers in my belly
+
+\end{verbatim}
+A step is analogous to a method or function \emph{invocation}. In this example, you're ``calling'' the step definition above with one argument -- the string ``93''. Cucumber matches the Step against the Step Definition's Regexp and takes all of the captures from that match and passes them to the Proc.
+
+Step Definitions start with a \href{http://www.merriam-webster.com/dictionary/given}{preposition} or an \href{http://www.merriam-webster.com/dictionary/when}{adverb} (\textbf{Given}, \textbf{When}, \textbf{Then}, \textbf{And}, \textbf{But}), and can be expressed in any of Cucumber's supported [[Spoken languages]]. All Step definitions are loaded (and defined) before Cucumber starts to execute the plain text.
+
+When Cucumber executes the plain text, it will for each step look for a registered Step Definition with a matching Regexp. If it finds one it will execute its Proc, passing all groups from the Regexp match as arguments to the Proc.
+
+The preposition/adverb has \textbf{no} significance when Cucumber is registering or looking for Step Definitions.
+
+Also check out [[Multiline Step Arguments]] for more info on how to pass entire tables or bigger strings to your step definitions.
+
+\section{Successful steps}
+
+When Cucumber finds a matching Step Definition it will execute it. If the block in the step definition doesn't raise an Exception, the step is marked as successful (green). What you return from a Step Definition has no significance what so ever.
+
+\section{Undefined steps}
+
+When Cucumber can't find a matching Step Definition the step gets marked as yellow, and all subsequent steps in the scenario are skipped. If you use \verb@--strict@ this will cause Cucumber to exit with \verb@1@.
+
+\section{Pending steps}
+
+When a Step Definition's Proc invokes the \verb@#pending@ method, the step is marked as yellow (as with undefined ones), reminding you that you have work to do. If you use \verb@--strict@ this will cause Cucumber to exit with \verb@1@.
+
+\section{Failed steps}
+
+When a Step Definition's Proc is executed and raises an error, the step is marked as red. What you return from a Step Definition has no significance what so ever. Returning nil or false will \textbf{not} cause a step definition to fail.
+
+\section{Skipped steps}
+
+Steps that follow undefined, pending or failed steps are never executed (even if there is a matching Step Definition), and are marked cyan.
+
+\section{String steps}
+
+Steps can be defined using strings rather than regular expressions. Instead of writing
+
+\begin{verbatim}
+
+Given /^I have (.*) cucumbers in my belly$/ do |cukes|
+
+\end{verbatim}
+You could write
+\begin{verbatim}
+Given ``I have \$count cucumbers in my belly'' do |cukes|
+
+\end{verbatim}
+
+Note that a word preceded by a \$ sign is taken to be a placeholder, and will be converted to match \verb@.*@. The text matched by the wildcard becomes an argument to the block, and the word that appeared in the step definition is disregarded.
+
+\section{Ambiguous steps}
+
+Consider these step definitions:
+
+\begin{verbatim}
+Given /Three (.*) mice/ do |disability|
+end
+
+Given /Three blind (.*)/ do |animal|
+end
+
+\end{verbatim}
+And a plain text step:
+
+\begin{verbatim}
+\verb@Given Three blind mice@
+\end{verbatim}
+Cucumber can't make a decision about what Step Definition to execute, and wil raise a \verb@Cucumber::Ambiguous@ error telling you to fix the ambiguity.
+
+\subsubsection{Guess mode}
+
+Running the plain text step will match the Regexp of both step definitions and raise \verb@Cucumber::Ambiguous@. However,
+if you run Cucumber with \verb@--guess@, it will guess that you were aiming for the step definition with 2 match groups.
+
+There is ranking logic that gets invoked when the option is turned on:
+
+\begin{enumerate}
+  \item The longest Regexp with 0 capture groups always wins.
+  \item The Regexp with the most capture groups wins (when there are none with 0 groups)
+  \item If there are 2+ Regexen with the same number of capture groups, the one with the shortest overall captured string length wins
+  \item If there are still 2+ options then an Ambiguous error is raised
+\end{enumerate}
+
+So if you try \verb@--guess@ with the mice above, Cucumber will pick \verb@/Three blind (.*)/@, because ``mice'' is shorter than ``blind''.
+
+Consider guess mode a workaround. We still recommend you try to have unambiguous regular expressions. When you have a lot of step definitions you quickly lose track of the situations where cucumber will apply guessing logic, and that can lead to some surprises.
+
+\section{Redundant Step Definitions}
+
+In Cucumber you're not allowed to use a regexp more than once in a Step Definition (even across files, even with different code inside the Proc), so the following would cause a \verb@Cucumber::Redundant@ error:
+
+\begin{verbatim}
+Given /Three (.*) mice/ do |disability|
+  # some code
+end
+
+Given /Three (.*) mice/ do |disability|
+  # some other code
+end
+
+\end{verbatim}
